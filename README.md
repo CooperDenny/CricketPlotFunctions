@@ -11,7 +11,7 @@ This repository contains a set of functions to plot a cricket field and a cricke
 `cricket_field(straight_boundary = 60, square_boundary = 70)` 
 ![Cricket Field](images/cricket_field_1.png)
 
-`cricket_field(straight_boundary = 80, square_boundary = 65)` 
+`cricket_field(straight_boundary = 75, square_boundary = 65)` 
 ![Cricket Field](images/cricket_field_2.png)
 
 `cricket_pitch()`
