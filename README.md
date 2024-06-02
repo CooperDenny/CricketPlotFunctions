@@ -1,5 +1,5 @@
 # CricketPlotFunctions
-This repository contains a set of functions to plot a cricket field and a cricket pitch
+This repository contains a set of functions to plot a cricket field, a cricket pitch and an annotated cricket pitch
 
 ## Contents
 - `cricket_plot_functions.R`: R script containing functions to plot a cricket field and a cricket pitch
