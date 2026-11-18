@@ -1,194 +1,194 @@
 ##################################################################
 # cricket_plot_functions.R
 # R Project: CricketPlotFunctions
+#
+# Usage:
+#   source("https://raw.githubusercontent.com/CooperDenny/CricketPlotFunctions/main/cricket_plot_functions.R")
+#   cricket_field(straight_boundary = 65, square_boundary = 65)
+#   cricket_pitch()
+#   cricket_pitch_annotated()
+#
+# Coordinates are metres with the origin at the centre of the pitch; the pitch
+# runs along the y axis. Every function returns a ggplot object.
 ##################################################################
 
 #Load necessary libraries
-library(tidyverse)  #Collection of R packages for data manipulation and visualization
 library(ggplot2)    #Package for creating graphics
-library(ggforce)    #Package for additional ggplot2 functionalities
 
 
+##################################################################
+# Shared geometry
+##################################################################
 
+stumps_y   <- 10.06    #Half of the 22 yards (20.12m) between the stumps
+popping_y  <- 8.84     #Popping crease, 1.22m (4ft) in front of the stumps
+return_y   <- 11.28    #Return creases run 2.44m (8ft) behind the popping crease
+inner_r    <- 27.43    #Radius of the fielding restriction ("30 yard") circle
+
+#Crease markings at both ends: popping creases, bowling creases and return creases
+crease_lines <- data.frame(
+  x    = c(-2.1, -2.1, -1.32, -1.32, -1.32,  1.32, -1.32, 1.32),
+  xend = c( 2.1,  2.1,  1.32,  1.32, -1.32,  1.32, -1.32, 1.32),
+  y    = c(-popping_y, popping_y, -stumps_y, stumps_y, -popping_y, -popping_y, popping_y, popping_y),
+  yend = c(-popping_y, popping_y, -stumps_y, stumps_y, -return_y, -return_y, return_y, return_y)
+)
+
+#Wide guidelines between the popping and bowling creases (blue)
+wide_lines <- data.frame(
+  x    = c(0.882, -0.882, 0.882, -0.882),
+  xend = c(0.882, -0.882, 0.882, -0.882),
+  y    = c(popping_y, popping_y, -popping_y, -popping_y),
+  yend = c(stumps_y, stumps_y, -stumps_y, -stumps_y)
+)
+
+#Three stumps at each end (red)
+stumps <- data.frame(
+  x = rep(c(-0.125, 0, 0.125), times = 2),
+  y = rep(c(-stumps_y, stumps_y), each = 3)
+)
+
+#Points around an ellipse centred on the origin
+ellipse_path <- function(a, b, n = 361) {
+  t <- seq(0, 2 * pi, length.out = n)
+  data.frame(x = a * cos(t), y = b * sin(t))
+}
+
+#The fielding restriction circle: semicircles of 30 yards radius centred on each
+#set of stumps, joined by straight lines
+inner_circle_path <- function(n = 100) {
+  top    <- seq(0, pi, length.out = n)
+  bottom <- seq(pi, 2 * pi, length.out = n)
+  data.frame(
+    x = c(inner_r * cos(top), inner_r * cos(bottom), inner_r),
+    y = c(stumps_y + inner_r * sin(top), -stumps_y + inner_r * sin(bottom), stumps_y)
+  )
+}
+
+#Layers that draw the creases, and optionally the wide guidelines and stumps
+pitch_markings <- function(linewidth, wide_guides = TRUE, show_stumps = TRUE) {
+  layers <- list(
+    geom_segment(data = crease_lines, aes(x = x, y = y, xend = xend, yend = yend),
+                 linewidth = linewidth, inherit.aes = FALSE)
+  )
+  if (wide_guides) {
+    layers <- c(layers, geom_segment(data = wide_lines, aes(x = x, y = y, xend = xend, yend = yend),
+                                     linewidth = linewidth, color = "#419CE1", inherit.aes = FALSE))
+  }
+  if (show_stumps) {
+    layers <- c(layers, geom_point(data = stumps, aes(x = x, y = y), color = "red", size = 1,
+                                   inherit.aes = FALSE))
+  }
+  layers
+}
+
+
+##################################################################
+# Plotting functions
+##################################################################
 
 #Define the function to plot the cricket field
 cricket_field <- function(straight_boundary = 65, square_boundary = 65) {
-  
+
   #This function, cricket_field, generates a graphical representation of an oval/circle cricket ground.
   #The field has specific markings such as the 30 yard circle, the pitch and the boundary line
-  
+
   #The function takes two parameters:
-  #- straight_boundary: The vertical distance from the middle of the pitch to the boundary line (default is 65 metres).
-  #- square_boundary: The vertical distance from the middle of the pitch to the boundary line (default is 65 metres).
-  
-  # Create a data frame with vales for the top and bottom arcs of the 30 yard circle
-  angle_data <- data.frame(
-    top_x = 27.4 * cos(seq(0, pi, length.out = 100)),
-    top_y = 10.06 + 27.4 * sin(seq(0, pi, length.out = 100)),
-    bottom_x = 27.4 * cos(seq(pi, 2*pi, length.out = 100)),
-    bottom_y = -10.06 + 27.4 * sin(seq(pi, 2*pi, length.out = 100))
-  )
-  
-  ggplot(angle_data, aes(x = top_x, y = top_y)) +
-    
+  #- straight_boundary: The distance from the middle of the pitch to the boundary, along the line of the pitch (default is 65 metres).
+  #- square_boundary: The distance from the middle of the pitch to the boundary, square of the pitch (default is 65 metres).
+
+  stopifnot(is.numeric(straight_boundary), straight_boundary > inner_r + stumps_y,
+            is.numeric(square_boundary), square_boundary > inner_r)
+
+  ggplot() +
+
     #Plot the shape of the oval
-    geom_ellipse(aes(x0 = 0, y0 = 0, a = square_boundary + 5, b = straight_boundary + 5, angle = 0), fill = "#65AF56") +
-    
+    geom_polygon(data = ellipse_path(square_boundary + 5, straight_boundary + 5), aes(x, y), fill = "#65AF56") +
+
     #Plot the boundary line
-    geom_ellipse(aes(x0 = 0, y0 = 0, a = square_boundary, b = straight_boundary, angle = 0), size = 0.8, color = "white") +
-    
-    #Plot the top arc of the 30 yard circle
-    geom_path(size = 0.8, linetype = "dotted", color = "white") +
-    
-    #Plot the bottom arc of the 30 yard circle
-    geom_path(aes(x = bottom_x, y = bottom_y), size = 0.8, linetype = "dotted", color = "white") +
-    
-    #Plot the left vertical line of the 30 yard circle
-    geom_path(aes(x = seq(-27.4, -27.4, length.out = 100), y = seq(10.06, -10.06, length.out = 100)), size = 0.8, linetype = "dotted", color = "white") +
-    
-    #Plot the right vertical line of the 30 yard circle
-    geom_path(aes(x = seq(27.4, 27.4, length.out = 100), y = seq(10.06, -10.06, length.out = 100)), size = 0.8, linetype = "dotted", color = "white") +
-    
+    geom_path(data = ellipse_path(square_boundary, straight_boundary), aes(x, y), linewidth = 0.8, color = "white") +
+
+    #Plot the 30 yard circle
+    geom_path(data = inner_circle_path(), aes(x, y), linewidth = 0.8, linetype = "dotted", color = "white") +
+
     #Plot the rectangle shape of the pitch
     annotate("rect", xmin = -1.83, xmax = 1.83,
-             ymin = -11.28, ymax = 11.28,
+             ymin = -return_y, ymax = return_y,
              alpha = 1, fill = "#EDDDB1", color = "black", linewidth = 0.1) +
-    
+
     #Plot the pitch markings
-    geom_segment(aes(x = -2.1, y = -8.84, xend = 2.1, yend = -8.84), linewidth = 0.01) +
-    geom_segment(aes(x = -2.1, y = 8.84, xend = 2.1, yend = 8.84), linewidth = 0.01) +
-    geom_segment(aes(x = -1.32, y = -10.06, xend = 1.32, yend = -10.06), linewidth = 0.01) +
-    geom_segment(aes(x = -1.32, y = 10.06, xend = 1.32, yend = 10.06), linewidth = 0.01) +
-    geom_segment(aes(x = -1.32, y = -8.84, xend = -1.32, yend = -11.28), linewidth = 0.01) +
-    geom_segment(aes(x = 1.32, y = -8.84, xend = 1.32, yend = -11.28), linewidth = 0.01) +
-    geom_segment(aes(x = -1.32, y = 8.84, xend = -1.32, yend = 11.28), linewidth = 0.01) +
-    geom_segment(aes(x = 1.32, y = 8.84, xend = 1.32, yend = 11.28), linewidth = 0.01) +
-    
+    pitch_markings(linewidth = 0.15, wide_guides = FALSE, show_stumps = FALSE) +
+
     #Remove background and set aspect ratio
-    theme_void() + 
+    theme_void() +
     coord_fixed(ratio = 1)
 }
-
-
 
 
 cricket_pitch <- function(){
-  
+
   #This function, cricket_pitch, generates a graphical representation of a cricket pitch
-  
+
   ggplot() +
-    
+
     #Plot the rectangle shape of the pitch
     annotate("rect", xmin = -1.83, xmax = 1.83,
-             ymin = -11.28, ymax = 11.28,
+             ymin = -return_y, ymax = return_y,
              alpha = 1, fill = "#EDDDB1") +
-    
-    #Plot the pitch markings
-    geom_segment(aes(x = -2.1, y = -8.84, xend = 2.1, yend = -8.84), linewidth = 1) +
-    geom_segment(aes(x = -2.1, y = 8.84, xend = 2.1, yend = 8.84), linewidth = 1) +
-    geom_segment(aes(x = -1.32, y = -10.06, xend = 1.32, yend = -10.06), linewidth = 1) +
-    geom_segment(aes(x = -1.32, y = 10.06, xend = 1.32, yend = 10.06), linewidth = 1) +
-    geom_segment(aes(x = -1.32, y = -8.84, xend = -1.32, yend = -11.28), linewidth = 1) +
-    geom_segment(aes(x = 1.32, y = -8.84, xend = 1.32, yend = -11.28), linewidth = 1) +
-    geom_segment(aes(x = -1.32, y = 8.84, xend = -1.32, yend = 11.28), linewidth = 1) +
-    geom_segment(aes(x = 1.32, y = 8.84, xend = 1.32, yend = 11.28), linewidth = 1) +
-    geom_segment(aes(x = 0.882, y = 8.84, xend = 0.882, yend = 10.06), linewidth = 1, color = "#419CE1") +
-    geom_segment(aes(x = -0.882, y = 8.84, xend = -0.882, yend = 10.06), linewidth = 1, color = "#419CE1") +
-    geom_segment(aes(x = 0.882, y = -8.84, xend = 0.882, yend = -10.06), linewidth = 1, color = "#419CE1") +
-    geom_segment(aes(x = -0.882, y = -8.84, xend = -0.882, yend = -10.06), linewidth = 1, color = "#419CE1") +
-    
-    #Plot the bottom set of stumps 
-    geom_point(aes(x = -0.125, y = -10.06), color = "red", size = 1) +
-    geom_point(aes(x = 0, y = -10.06), color = "red", size = 1) +
-    geom_point(aes(x = 0.125, y = -10.06), color = "red", size = 1) +
-    
-    #Plot the top set of stumps
-    geom_point(aes(x = -0.125, y = 10.06), color = "red", size = 1) +
-    geom_point(aes(x = 0, y = 10.06), color = "red", size = 1) +
-    geom_point(aes(x = 0.125, y = 10.06), color = "red", size = 1) +
-    
+
+    #Plot the creases, wide guidelines and stumps
+    pitch_markings(linewidth = 1) +
+
     #Remove background and set aspect ratio
-    theme_void() + 
+    theme_void() +
     coord_fixed(ratio = 1)
 }
 
 
-
-
 cricket_pitch_annotated <- function(){
-  
+
   #This function, cricket_pitch_annotated, generates a graphical representation of an annotated cricket pitch
-  #It includes coloured markings for different lengths
+  #It includes coloured markings for different lengths, measured from the batter's stumps (top of the plot)
 
   ggplot() +
-    
+
     #Plot the rectangle shape of the pitch
     annotate("rect", xmin = -1.83, xmax = 1.83,
-             ymin = -11.28, ymax = 11.28,
+             ymin = -return_y, ymax = return_y,
              alpha = 1, fill = "#EDDDB1") +
-    
-    #Fill in the "yorker" length in yellow
+
+    #Fill in the "yorker" length (0-2m from the stumps) in yellow
     annotate("rect", xmin = -1.83, xmax = 1.83,
-             ymin = 8.06, ymax = 10.06,
+             ymin = stumps_y - 2, ymax = stumps_y,
              alpha = 1, fill = "#F1F7A1") +
-    
-    #Fill in the "full" length in green
+
+    #Fill in the "full" length (2-5m) in green
     annotate("rect", xmin = -1.83, xmax = 1.83,
-             ymin = 5.06, ymax = 8.06,
+             ymin = stumps_y - 5, ymax = stumps_y - 2,
              alpha = 1, fill = "#A1F7AB") +
-    
-    #Fill in the "good" length in red
+
+    #Fill in the "good" length (5-7m) in red
     annotate("rect", xmin = -1.83, xmax = 1.83,
-             ymin = 3.06, ymax = 5.06,
+             ymin = stumps_y - 7, ymax = stumps_y - 5,
              alpha = 1, fill = "#F7A1A1") +
-    
-    #Fill in the short length in blue
+
+    #Fill in the short length (more than 7m) in blue
     annotate("rect", xmin = -1.83, xmax = 1.83,
-             ymin = -10.06, ymax = 3.06,
+             ymin = -stumps_y, ymax = stumps_y - 7,
              alpha = 1, fill = "#A1BEF7") +
-    
-    #Fill in area in line with the stumps in grey
+
+    #Fill in area in line with the stumps (the 9 inch wicket) in grey
     annotate("rect", xmin = -0.1143, xmax = 0.1143,
-             ymin = -10.06, ymax = 10.06,
+             ymin = -stumps_y, ymax = stumps_y,
              alpha = 0.4, fill = "grey") +
-    
-    #Plot the pitch markings
-    geom_segment(aes(x = -2.1, y = -8.84, xend = 2.1, yend = -8.84), linewidth = 1) +
-    geom_segment(aes(x = -2.1, y = 8.84, xend = 2.1, yend = 8.84), linewidth = 1) +
-    geom_segment(aes(x = -1.32, y = -10.06, xend = 1.32, yend = -10.06), linewidth = 1) +
-    geom_segment(aes(x = -1.32, y = 10.06, xend = 1.32, yend = 10.06), linewidth = 1) +
-    geom_segment(aes(x = -1.32, y = -8.84, xend = -1.32, yend = -11.28), linewidth = 1) +
-    geom_segment(aes(x = 1.32, y = -8.84, xend = 1.32, yend = -11.28), linewidth = 1) +
-    geom_segment(aes(x = -1.32, y = 8.84, xend = -1.32, yend = 11.28), linewidth = 1) +
-    geom_segment(aes(x = 1.32, y = 8.84, xend = 1.32, yend = 11.28), linewidth = 1) +
-    geom_segment(aes(x = 0.882, y = 8.84, xend = 0.882, yend = 10.06), linewidth = 1, color = "#419CE1") +
-    geom_segment(aes(x = -0.882, y = 8.84, xend = -0.882, yend = 10.06), linewidth = 1, color = "#419CE1") +
-    geom_segment(aes(x = 0.882, y = -8.84, xend = 0.882, yend = -10.06), linewidth = 1, color = "#419CE1") +
-    geom_segment(aes(x = -0.882, y = -8.84, xend = -0.882, yend = -10.06), linewidth = 1, color = "#419CE1") +
-    
-    #Plot the bottom set of stumps 
-    geom_point(aes(x = -0.125, y = -10.06), color = "red", size = 1) +
-    geom_point(aes(x = 0, y = -10.06), color = "red", size = 1) +
-    geom_point(aes(x = 0.125, y = -10.06), color = "red", size = 1) +
-    
-    #Plot the top set of stumps
-    geom_point(aes(x = -0.125, y = 10.06), color = "red", size = 1) +
-    geom_point(aes(x = 0, y = 10.06), color = "red", size = 1) +
-    geom_point(aes(x = 0.125, y = 10.06), color = "red", size = 1) +
-    
+
+    #Plot the creases, wide guidelines and stumps
+    pitch_markings(linewidth = 1) +
+
     #Add text labels at different lengths on the pitch
-    geom_text(aes(x = -2, y = 10.06), label = "STUMPS", hjust = 0.9, size = 3) +
-    geom_text(aes(x = -2, y = 8.06), label = "2m", hjust = 0.9, size = 3) +
-    geom_text(aes(x = -2, y = 6.06), label = "4m", hjust = 0.9, size = 3) +
-    geom_text(aes(x = -2, y = 4.06), label = "6m", hjust = 0.9, size = 3) +
-    geom_text(aes(x = -2, y = 2.06), label = "8m", hjust = 0.9, size = 3) +
-    geom_text(aes(x = -2, y = 0), label = "HALFWAY", hjust = 0.9, size = 3) +
-    
-    #Remove background and set aspect ratio
-    theme_void() + 
-    coord_fixed(ratio = 1) + 
-    
-    #Adjust the plot x and y limits so that it doesn't cut off the text
-    xlim(-6,6) + 
-    ylim(-12,12)
+    annotate("text", x = -2, y = stumps_y - c(0, 2, 4, 6, 8, stumps_y),
+             label = c("STUMPS", "2m", "4m", "6m", "8m", "HALFWAY"), hjust = 0.9, size = 3) +
+
+    #Remove background, set aspect ratio, and widen the view so the labels aren't cut off
+    theme_void() +
+    coord_fixed(ratio = 1, xlim = c(-6, 6), ylim = c(-12, 12))
 }
