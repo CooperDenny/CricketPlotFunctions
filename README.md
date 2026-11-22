@@ -96,3 +96,40 @@ All match data in these examples is simulated; see `examples.R`.
 
 `cricket_worm(overs, team = "team")`
 ![Worm](images/cricket_worm.png)
+
+## Gallery
+
+### Right- and left-handers from the same data
+
+The angle convention is relative to the off side, so one shot table plots correctly for either hand. Right-hander on the left, `handedness = "LHB"` on the right: the same shots, mirrored.
+
+<img src="images/cricket_wagon_wheel.png" width="49%" alt="Wagon wheel, right-hander"> <img src="images/cricket_wagon_wheel_lhb.png" width="49%" alt="Wagon wheel, left-hander">
+
+<img src="images/cricket_scoring_zones.png" width="49%" alt="Scoring zones, right-hander"> <img src="images/cricket_scoring_zones_lhb.png" width="49%" alt="Scoring zones, left-hander">
+
+<img src="images/cricket_pitch_map.png" width="32%" alt="Pitch map, right-hander"> <img src="images/cricket_pitch_map_lhb.png" width="32%" alt="Pitch map, left-hander">
+
+### Your own length breaks
+
+The default pace breaks next to custom ones, `cricket_pitch_annotated(lengths = c(yorker = 1.5, full = 4, good = 6))`, e.g. for a spinner.
+
+<img src="images/cricket_pitch_annotated.png" width="32%" alt="Default length zones"> <img src="images/cricket_pitch_annotated_custom.png" width="32%" alt="Custom length zones">
+
+### Field settings
+
+An attacking field with three slips and a gully, and a defensive field with six on the rope, on a ground wider square (72 m) than straight (66 m):
+
+<img src="images/cricket_field_attacking.png" width="49%" alt="Attacking field"> <img src="images/cricket_field_defensive.png" width="49%" alt="Defensive field">
+
+### One innings
+
+Leave out `team` for a single innings: `cricket_manhattan(overs)` and `cricket_worm(overs)`
+
+![Manhattan, one innings](images/cricket_manhattan_single.png)
+![Worm, one innings](images/cricket_worm_single.png)
+
+### Ground shapes
+
+Round (62 m), longer than wide (75 × 65) and wider than long (60 × 70):
+
+<img src="images/cricket_field_round.png" width="32%" alt="Round ground"> <img src="images/cricket_field_2.png" width="32%" alt="Long ground"> <img src="images/cricket_field_1.png" width="32%" alt="Wide ground">

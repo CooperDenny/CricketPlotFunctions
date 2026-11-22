@@ -89,3 +89,38 @@ innings <- function(team, boost) {
 overs <- rbind(innings("Team A", 0.6), innings("Team B", 0))
 save(cricket_manhattan(overs, team = "team"), "cricket_manhattan.png", 8, 4.2)
 save(cricket_worm(overs, team = "team"), "cricket_worm.png", 8, 4.2)
+
+##################################################################
+# Gallery: left-handers, custom lengths, field settings, one innings
+##################################################################
+
+#Exactly the same shot data, plotted for a left-hander: everything mirrors
+save(cricket_wagon_wheel(shots, straight_boundary = 68, square_boundary = 64, handedness = "LHB"),
+     "cricket_wagon_wheel_lhb.png", 7, 7)
+save(cricket_scoring_zones(shots, straight_boundary = 68, square_boundary = 64, handedness = "LHB"),
+     "cricket_scoring_zones_lhb.png", 6.4, 7)
+save(cricket_pitch_map(deliveries, colour = "outcome", handedness = "LHB") +
+       scale_fill_manual(values = c(Dot = "white", Runs = "#3A86FF", Wicket = "#E63946")),
+     "cricket_pitch_map_lhb.png", 4.2, 7.4)
+
+#Your own length breaks, e.g. fuller ones for a spinner
+save(cricket_pitch_annotated(lengths = c(yorker = 1.5, full = 4, good = 6), handedness = "RHB"),
+     "cricket_pitch_annotated_custom.png", 4, 7)
+
+#Two contrasting field settings on a wider-than-long ground
+attacking <- c("Wicketkeeper", "Bowler", "First slip", "Second slip", "Third slip", "Gully",
+               "Point", "Cover", "Mid-off", "Mid-on", "Fine leg")
+defensive <- c("Wicketkeeper", "Bowler", "Third man", "Deep point", "Deep cover", "Long off",
+               "Long on", "Deep midwicket", "Deep square leg", "Fine leg", "Short fine leg")
+save(cricket_fielding_positions(attacking, straight_boundary = 66, square_boundary = 72),
+     "cricket_field_attacking.png", 6.8, 7)
+save(cricket_fielding_positions(defensive, straight_boundary = 66, square_boundary = 72),
+     "cricket_field_defensive.png", 6.8, 7)
+
+#One innings on its own (no team column)
+one <- overs[overs$team == "Team A", ]
+save(cricket_manhattan(one), "cricket_manhattan_single.png", 8, 3.8)
+save(cricket_worm(one), "cricket_worm_single.png", 8, 3.8)
+
+#Round ground
+save(cricket_field(straight_boundary = 62, square_boundary = 62), "cricket_field_round.png", 6.4, 6.4)

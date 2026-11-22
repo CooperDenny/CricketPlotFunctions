@@ -471,9 +471,9 @@ fielding_positions <- data.frame(
                "Extra cover", "Mid-off", "Mid-on", "Midwicket", "Square leg", "Backward square leg",
                "Short fine leg", "Third man", "Deep point", "Deep cover", "Long off", "Long on",
                "Deep midwicket", "Deep square leg", "Fine leg"),
-  angle    = c(180, 0, 162, 154, 146, 132, 100, -100, -165, 92, 108, 60, 40, 14, -14, -60, -92,
+  angle    = c(180, 0, 162, 154, 146, 128, 100, -100, -165, 92, 108, 60, 40, 14, -14, -60, -92,
                -112, -150, 148, 95, 58, 10, -10, -58, -95, -162),
-  distance = c(12, 22, 15, 16, 17, 15, 6, 6, 14, 24, 25, 26, 27, 26, 26, 26, 24, 23, 20,
+  distance = c(12, 22, 15, 16, 17, 17, 6, 6, 14, 24, 25, 26, 27, 26, 26, 26, 24, 23, 20,
                0.94, 0.94, 0.94, 0.94, 0.94, 0.94, 0.94, 0.94),
   boundary = c(rep(FALSE, 19), rep(TRUE, 8)),
   #Which side of the point the label goes, so the slip cordon stays readable
